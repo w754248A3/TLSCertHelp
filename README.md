@@ -1,3 +1,6 @@
+## [下载蓝奏云](https://wws.lanzous.com/isCnRopps5c)
+密码:2bx3
+
 ## 用法
 1. 
 第一次运行exe，会在相同文件夹下生成两个文本文件，（前提还没有）
