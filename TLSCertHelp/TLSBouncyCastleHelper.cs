@@ -157,6 +157,16 @@ namespace LeiKaiFeng.X509Certificates
 
         }
 
+        static void SetKeyUsageCA(X509V3CertificateGenerator generator)
+        {
+            generator.AddExtension(X509Extensions.KeyUsage, false, new KeyUsage(KeyUsage.KeyCertSign));
+        }
+
+        static void SetKeyUsageTls(X509V3CertificateGenerator generator)
+        {
+            generator.AddExtension(X509Extensions.KeyUsage, false, new KeyUsage(KeyUsage.DigitalSignature));
+        }
+
         static void SetSubjectPublicKey(X509V3CertificateGenerator generator, AsymmetricKeyParameter subjectPublic)
         {
             //Subject Key Identifier
@@ -167,8 +177,6 @@ namespace LeiKaiFeng.X509Certificates
                 X509Extensions.SubjectKeyIdentifier, false, subjectKeyIdentifier);
 
         }
-
-        
 
         public static SX.X509Certificate2 GenerateCA(
             string name,
@@ -181,6 +189,8 @@ namespace LeiKaiFeng.X509Certificates
 
             var subject = new X509Name($"CN={name}");
 
+            
+
             cert.SetIssuerDN(subject);
 
             cert.SetSubjectDN(subject);
@@ -191,13 +201,23 @@ namespace LeiKaiFeng.X509Certificates
 
             cert.SetPublicKey(key.Public);
 
+            SetKeyUsageCA(cert);
+
             SetBasicConstraints(cert, true);
+
+            SetExtendedKeyUsage(cert);
+
+            SetuthorityKeyIdentifier(cert, key.Public);
+
+            SetSubjectPublicKey(cert, key.Public);
 
             var x509 = cert.Generate(new Asn1SignatureFactory(PkcsObjectIdentifiers.Sha256WithRsaEncryption.Id, key.Private));
 
             return AsForm(x509, key, Random);
 
         }
+
+
 
 
         static X509V3CertificateGenerator GenerateTls(
@@ -209,30 +229,32 @@ namespace LeiKaiFeng.X509Certificates
             string[] subjectNames
             )
         {
-            var certGen = new X509V3CertificateGenerator();
+            var cert = new X509V3CertificateGenerator();
 
-            certGen.SetIssuerDN(issuerName);
+            cert.SetIssuerDN(issuerName);
 
-            certGen.SetSubjectDN(subjectName);
+            cert.SetSubjectDN(subjectName);
 
-            certGen.SetSerialNumber(GenerateSerialNumber(Random));
+            cert.SetSerialNumber(GenerateSerialNumber(Random));
 
-            SetDateTime(certGen, days);
+            SetDateTime(cert, days);
 
-            certGen.SetPublicKey(subjectPublicKey);
+            cert.SetPublicKey(subjectPublicKey);
 
-            SetBasicConstraints(certGen, false);
+            SetBasicConstraints(cert, false);
 
-            SetExtendedKeyUsage(certGen);
+            SetExtendedKeyUsage(cert);
+            
+            SetuthorityKeyIdentifier(cert, issuerPublicKey);
 
-            SetuthorityKeyIdentifier(certGen, issuerPublicKey);
+            SetKeyUsageTls(cert);
 
-            SetSubjectPublicKey(certGen, subjectPublicKey);
+            SetSubjectPublicKey(cert, subjectPublicKey);
 
-            SetSubjectAlternativeNames(certGen, subjectNames);
+            SetSubjectAlternativeNames(cert, subjectNames);
 
 
-            return certGen;
+            return cert;
         }
 
         public static SX.X509Certificate2 GenerateTls(
